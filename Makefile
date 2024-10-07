@@ -112,6 +112,6 @@ test:
 	$(TS) test
 
 nvim-test: zsh.so
-	cc -o zsh.so -bundle src/parser.c src/scanner.c -Os -I./src
+	cc -o zsh.so -bundle $(PARSER) $(EXTRAS) -Os -I./src
 
 .PHONY: all install uninstall clean test
