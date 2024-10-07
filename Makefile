@@ -114,7 +114,4 @@ clean:
 test: $(PARSER)
 	$(TS) test
 
-nvim-test: zsh.so
-	cc -o zsh.so -bundle $(PARSER) $(EXTRAS) -Os -I./src
-
 .PHONY: all install uninstall clean test
