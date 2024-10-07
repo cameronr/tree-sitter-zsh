@@ -10,9 +10,9 @@
 
 Experimental Zsh grammar for [tree-sitter](https://github.com/tree-sitter/tree-sitter).
 
-This is an experiemental fork of the [Bash grammar](https://github.com/tree-sitter/tree-sitter-bash).
+This is an "experiemental" fork of the [Bash grammar](https://github.com/tree-sitter/tree-sitter-bash).
 
-It definitely isn't correct and probably doesn't do what you want.
+I don't know what I'm doing. It's probably not correct and probably doesn't do what you want.
 
 ## Development
 
@@ -38,13 +38,12 @@ Build and run the playround
 
 ```sh
 npm run start
-npm run test
 ```
 
 Run the node tests
 
 ```sh
-npm run test:watch
+npm run test
 ```
 
 ### References
