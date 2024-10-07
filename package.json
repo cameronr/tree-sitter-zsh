@@ -1,8 +1,8 @@
 {
-  "name": "tree-sitter-bash",
+  "name": "tree-sitter-zsh",
   "version": "0.23.1",
-  "description": "Bash grammar for tree-sitter",
-  "repository": "github:tree-sitter/tree-sitter-bash",
+  "description": "Zsh grammar for tree-sitter",
+  "repository": "github:tree-sitter/tree-sitter-zsh",
   "license": "MIT",
   "author": "Max Brunsfeld <maxbrunsfeld@gmail.com>",
   "contributors": [
@@ -22,7 +22,7 @@
     "incremental",
     "parsing",
     "tree-sitter",
-    "bash"
+    "zsh"
   ],
   "dependencies": {
     "node-addon-api": "^8.1.0",
@@ -50,14 +50,13 @@
   },
   "tree-sitter": [
     {
-      "scope": "source.bash",
-      "injection-regex": "^(shell|bash|sh)$",
-      "first-line-regex": "^#!.*\\b(sh|bash|dash)\\b.*$",
+      "scope": "source.zsh",
+      "injection-regex": "^(zsh)$",
+      "first-line-regex": "^#!.*\\b(zsh)\\b.*$",
       "file-types": [
-        "sh",
-        "bash",
-        ".bashrc",
-        ".bash_profile",
+        "zsh",
+        ".zshrc",
+        ".zsh_profile",
         "ebuild",
         "eclass"
       ]

@@ -4,7 +4,7 @@ endif
 
 VERSION := 0.23.1
 
-LANGUAGE_NAME := tree-sitter-bash
+LANGUAGE_NAME := tree-sitter-zsh
 
 # repository
 SRC_DIR := src
@@ -110,5 +110,8 @@ clean:
 
 test:
 	$(TS) test
+
+nvim-test: zsh.so
+	cc -o zsh.so -bundle src/parser.c src/scanner.c -Os -I./src
 
 .PHONY: all install uninstall clean test

@@ -1,5 +1,5 @@
 {
-  "name": "bash",
+  "name": "zsh",
   "word": "word",
   "rules": {
     "program": {

@@ -1,7 +1,8 @@
 /**
- * @file Bash grammar for tree-sitter
+ * @file Zsh grammar for tree-sitter
  * @author Max Brunsfeld <maxbrunsfeld@gmail.com>
  * @author Amaan Qureshi <amaanq12@gmail.com>
+ * @author Cameron Ring <cameron@cs.stanford.edu>
  * @license MIT
  */
 
@@ -43,7 +44,7 @@ const PREC = {
 };
 
 module.exports = grammar({
-  name: 'bash',
+  name: 'zsh',
 
   conflicts: $ => [
     [$._expression, $.command_name],

@@ -1,30 +1,47 @@
-# tree-sitter-bash
+# tree-sitter-zsh
 
-[![CI][ci]](https://github.com/tree-sitter/tree-sitter-bash/actions/workflows/ci.yml)
+[![CI][ci]](https://github.com/tree-sitter/tree-sitter-zsh/actions/workflows/ci.yml)
 [![discord][discord]](https://discord.gg/w7nTvsVJhm)
 [![matrix][matrix]](https://matrix.to/#/#tree-sitter-chat:matrix.org)
-[![crates][crates]](https://crates.io/crates/tree-sitter-bash)
-[![npm][npm]](https://www.npmjs.com/package/tree-sitter-bash)
-[![pypi][pypi]](https://pypi.org/project/tree-sitter-bash)
 
-Bash grammar for [tree-sitter](https://github.com/tree-sitter/tree-sitter).
+<!--[![crates][crates]](https://crates.io/crates/tree-sitter-zsh)-->
+<!--[![npm][npm]](https://www.npmjs.com/package/tree-sitter-zsh)-->
+<!--[![pypi][pypi]](https://pypi.org/project/tree-sitter-zsh)-->
+
+Experimental Zsh grammar for [tree-sitter](https://github.com/tree-sitter/tree-sitter).
+
+This is an experiemental fork of the [Bash grammar](https://github.com/tree-sitter/tree-sitter-bash).
+
+It definitely isn't correct and probably doesn't do what you want.
 
 ## Development
 
-Install the dependencies:
+Building the parser:
+
+```sh
+gmake
+```
+
+Running tree-sitter tests:
+
+```sh
+gmake test
+```
+
+For using the playground:
 
 ```sh
 npm install
 ```
 
-Build and run the tests:
+Build and run the playround
 
 ```sh
-npm run build
+npm run start
 npm run test
 ```
 
-Run the build and tests in watch mode:
+Run the node tests
 
 ```sh
 npm run test:watch
@@ -32,13 +49,5 @@ npm run test:watch
 
 ### References
 
-- [Bash man page](http://man7.org/linux/man-pages/man1/bash.1.html#SHELL_GRAMMAR)
-- [Shell command language specification](http://pubs.opengroup.org/onlinepubs/9699919799/utilities/V3_chap02.html)
-- [mvdnan/sh - a shell parser in go](https://github.com/mvdan/sh)
-
-[ci]: https://img.shields.io/github/actions/workflow/status/tree-sitter/tree-sitter-bash/ci.yml?logo=github&label=CI
-[discord]: https://img.shields.io/discord/1063097320771698699?logo=discord&label=discord
-[matrix]: https://img.shields.io/matrix/tree-sitter-chat%3Amatrix.org?logo=matrix&label=matrix
-[npm]: https://img.shields.io/npm/v/tree-sitter-bash?logo=npm
-[crates]: https://img.shields.io/crates/v/tree-sitter-bash?logo=rust
-[pypi]: https://img.shields.io/pypi/v/tree-sitter-bash?logo=pypi&logoColor=ffd242
+- [Bash grammar](https://github.com/tree-sitter/tree-sitter-bash).
+- [Zsh Shell Grammar](https://zsh.sourceforge.io/Doc/Release/Shell-Grammar.html#Shell-Grammar)
