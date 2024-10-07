@@ -1071,10 +1071,52 @@ module.exports = grammar({
     _zsh_prompt_expansion: _ => seq(
       '(%):',
       optional('-'),
+      '%',
+      // TODO: handle %{...%}, including %G
+      // https://zsh.sourceforge.io/Doc/Release/Prompt-Expansion.html
       choice(
-        '%n', // username
-        '%m', // hostname
-        '%d', // current working directory
+        '%',
+        ')',
+        'l',
+        'n',
+        'm',
+        'd',
+        'y',
+        '#',
+        '?',
+        '_',
+        '^',
+        'd',
+        '/',
+        '~',
+        'e',
+        'h',
+        '!',
+        'i',
+        'I',
+        'j',
+        'L',
+        'N',
+        'x',
+        'c',
+        '.',
+        'C',
+        'D',
+        'T',
+        't',
+        '@',
+        '*',
+        'w',
+        'W',
+        'B', 'b',
+        'E',
+        'U', 'u',
+        'S', 's',
+        'F', 'f',
+        'K', 'k',
+        'v',
+        // TODO: handle %D{string}
+        // TODO: handle %(x.true-text.false-text)
       ),
     ),
 
