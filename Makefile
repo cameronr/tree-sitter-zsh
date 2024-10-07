@@ -111,7 +111,7 @@ uninstall:
 clean:
 	$(RM) $(OBJS) $(LANGUAGE_NAME).pc lib$(LANGUAGE_NAME).a lib$(LANGUAGE_NAME).$(SOEXT)
 
-test:
+test: $(PARSER)
 	$(TS) test
 
 nvim-test: zsh.so
