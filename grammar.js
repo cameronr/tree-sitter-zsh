@@ -918,6 +918,7 @@ module.exports = grammar({
           ),
         )),
       ),
+      $._zsh_prompt_expansion,
     ),
 
     _expansion_expression: $ => prec(1, seq(
@@ -1066,6 +1067,17 @@ module.exports = grammar({
         ),
       )),
     )),
+
+    _zsh_prompt_expansion: _ => seq(
+      '(%):',
+      optional('-'),
+      choice(
+        '%n', // username
+        '%m', // hostname
+        '%d', // current working directory
+      ),
+    ),
+
 
     command_substitution: $ => choice(
       seq('$(', $._statements, ')'),
