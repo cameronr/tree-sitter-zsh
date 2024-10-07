@@ -2,7 +2,7 @@ ifeq ($(OS),Windows_NT)
 $(error Windows is not supported)
 endif
 
-VERSION := 0.23.1
+VERSION := 0.0.1
 
 LANGUAGE_NAME := tree-sitter-zsh
 
@@ -85,8 +85,11 @@ $(LANGUAGE_NAME).pc: bindings/c/$(LANGUAGE_NAME).pc.in
 		-e 's|=$(PREFIX)|=$${prefix}|' \
 		-e 's|@PREFIX@|$(PREFIX)|' $< > $@
 
-$(PARSER): $(SRC_DIR)/grammar.json
-	$(TS) generate --no-bindings $^
+$(PARSER): grammar.js
+	$(TS) generate --no-bindings
+
+# $(PARSER): $(SRC_DIR)/grammar.json
+# 	$(TS) generate --no-bindings $^
 
 install: all
 	install -d '$(DESTDIR)$(INCLUDEDIR)'/tree_sitter '$(DESTDIR)$(PCLIBDIR)' '$(DESTDIR)$(LIBDIR)'
