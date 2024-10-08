@@ -506,14 +506,14 @@ module.exports = grammar({
 
     variable_assignments: $ => seq($.variable_assignment, repeat1($.variable_assignment)),
 
-    subscript: $ => seq(
+    subscript: $ => prec.left(seq(
       field('name', $.variable_name),
       '[',
       field('index', choice($._literal, $.binary_expression, $.unary_expression, $.parenthesized_expression)),
       optional($._concat),
       ']',
       optional($._concat),
-    ),
+    )),
 
     file_redirect: $ => prec.left(seq(
       field('descriptor', optional($.file_descriptor)),
@@ -859,6 +859,7 @@ module.exports = grammar({
         $._multiline_variable_name,
         $._special_variable_name,
         $.variable_name,
+        $.subscript,
         alias('!', $.special_variable_name),
         alias('#', $.special_variable_name),
       ),
