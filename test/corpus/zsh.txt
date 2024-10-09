@@ -1,4 +1,42 @@
 ================================================================================
+Parameter expansion flags (zsh)
+================================================================================
+
+echo "${(L)var}"
+echo ${(s.:.)var}
+echo ${(g::)var}
+echo ${(g:o:)var}
+
+--------------------------------------------------------------------------------
+
+(program
+  (command
+    (command_name
+      (word))
+    (string
+      (expansion
+        (expansion_flags)
+        (variable_name))))
+  (command
+    (command_name
+      (word))
+    (expansion
+      (expansion_flags)
+      (variable_name)))
+  (command
+    (command_name
+      (word))
+    (expansion
+      (expansion_flags)
+      (variable_name)))
+  (command
+    (command_name
+      (word))
+    (expansion
+      (expansion_flags)
+      (variable_name))))
+
+================================================================================
 Prompt username parameter expansion (zsh)
 ================================================================================
 

@@ -141,6 +141,8 @@ module.exports = grammar({
     ),
 
     _statement_not_subshell: $ => choice(
+      $.junx_command,
+      $.blah_command,
       $.redirected_statement,
       $.variable_assignment,
       $.variable_assignments,
@@ -814,6 +816,20 @@ module.exports = grammar({
       optional(seq($._concat, '$')),
     )),
 
+    // Add a testing function
+    junx_command: $ => seq(
+      'JUNX',
+      $.simple_expansion,
+    ),
+
+    blah_command: $ => seq(
+      'BLAH',
+      choice(
+        $.simple_expansion,
+        $.concatenation,
+      ),
+    ),
+
     _special_character: _ => token(prec(-1, choice('{', '}', '[', ']'))),
 
     string: $ => seq(
@@ -869,9 +885,94 @@ module.exports = grammar({
 
     expansion: $ => seq(
       '${',
+      optional($.expansion_flags),
       optional($._expansion_body),
       '}',
     ),
+
+    expansion_flags: $ => seq(
+      '(',
+      repeat1(
+        choice(
+          '#', '%', '@', 'A', 'a', 'b', 'C', 'c', 'D', 'e',
+          'F', 'i', 'k', 'L', 'n', '-', 'o', 'O', 'P', 'Q',
+          'q', 't', 'U', 'u', 'V', 'V', 'W', 'w', 'X', 'z',
+          '0', 'p', '~', 'S', '*', 'B', 'E', 'M', 'N', 'R',
+
+          /* s:string: */
+          seq(
+            's',
+            $._expansion_flag_string,
+          ),
+
+          /* g:opts: */
+          seq(
+            'g', ':', /[^:]*/, ':',
+          ),
+
+          /* j:string: */
+          seq(
+            'j',
+            $._expansion_flag_string,
+          ),
+
+          /* Z:opts: */
+          seq(
+            'Z',
+            $._expansion_flag_string,
+          ),
+
+          /* _:opts: */
+          '_::',
+
+          /* I:expr: */
+          seq(
+            'I',
+            $._expansion_flag_string,
+          ),
+
+          /* l:expr::string1::string2: */
+          seq(
+            'l',
+            $._expansion_flag_string,
+            // FIXME: this is wrong, see _expansion_flag_string below
+            // optional(
+            //  seq(
+            //    $._expansion_flag_string,
+            //    optional(
+            //      $._expansion_flag_string,
+            //    )),
+            // ),
+          ),
+
+          /* r:expr::string1::string2: */
+          seq(
+            'r',
+            $._expansion_flag_string,
+            // FIXME: this is wrong, see _expansion_flag_string below
+            // optional(
+            //  seq(
+            //    $._expansion_flag_string,
+            //    optional(
+            //      $._expansion_flag_string,
+            //    )),
+            // ),
+          ),
+        )),
+      ')',
+    ),
+
+    // FIXME: this rule is wrong as it's just scanning for a ) when it
+    // really should be treating the first character as a delimited and then
+    // scanning until it finds that delimiter. e.g. this is valid:
+    //   ${(s.).)var}
+    // But I don't know how to do that currently
+    _expansion_flag_string: $ => seq(
+      /[^)]/,
+      repeat(/[^)]/),
+      /[^)]/,
+    ),
+
     _expansion_body: $ => choice(
       // ${!##} ${!#}
       repeat1(field(
@@ -919,7 +1020,6 @@ module.exports = grammar({
           ),
         )),
       ),
-      $._zsh_prompt_expansion,
     ),
 
     _expansion_expression: $ => prec(1, seq(
@@ -1068,59 +1168,6 @@ module.exports = grammar({
         ),
       )),
     )),
-
-    _zsh_prompt_expansion: _ => seq(
-      '(%):',
-      optional('-'),
-      '%',
-      // TODO: handle %{...%}, including %G
-      // https://zsh.sourceforge.io/Doc/Release/Prompt-Expansion.html
-      choice(
-        '%',
-        ')',
-        'l',
-        'n',
-        'm',
-        'd',
-        'y',
-        '#',
-        '?',
-        '_',
-        '^',
-        'd',
-        '/',
-        '~',
-        'e',
-        'h',
-        '!',
-        'i',
-        'I',
-        'j',
-        'L',
-        'N',
-        'x',
-        'c',
-        '.',
-        'C',
-        'D',
-        'T',
-        't',
-        '@',
-        '*',
-        'w',
-        'W',
-        'B', 'b',
-        'E',
-        'U', 'u',
-        'S', 's',
-        'F', 'f',
-        'K', 'k',
-        'v',
-        // TODO: handle %D{string}
-        // TODO: handle %(x.true-text.false-text)
-      ),
-    ),
-
 
     command_substitution: $ => choice(
       seq('$(', $._statements, ')'),
