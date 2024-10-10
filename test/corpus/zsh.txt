@@ -106,3 +106,22 @@ Test with numeric range (zsh)
     (binary_expression
       (word)
       (word))))
+
+================================================================================
+Anonymous functions(zsh)
+================================================================================
+
+() {
+  echo "hi"
+}
+--------------------------------------------------------------------------------
+
+
+(program
+  (function_definition
+    (compound_statement
+      (command
+        (command_name
+          (word))
+        (string
+          (string_content))))))

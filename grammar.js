@@ -394,6 +394,9 @@ module.exports = grammar({
           field('name', $.word),
           '(', ')',
         ),
+
+        // support anonymous functions
+        seq('(', ')'),
       ),
       field(
         'body',
