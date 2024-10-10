@@ -960,7 +960,6 @@ module.exports = grammar({
           $.prompt_expansion,
         ),
         choice(
-          $.prompt_expansion,
           $._expansion_expression,
           $._expansion_regex,
           $._expansion_regex_replacement,
