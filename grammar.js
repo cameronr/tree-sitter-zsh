@@ -158,7 +158,27 @@ module.exports = grammar({
       $.list,
       $.compound_statement,
       $.function_definition,
-    ),
+      $.junx_command,
+      $.blah_command,
+    ), //
+    //
+    // Add a testing function
+    junx_command: $ => seq(
+      'JUNX',
+      $.word,
+    ), //
+    //
+    blah_command: $ => prec.left(seq(
+      'BLAH',
+      '{',
+      $._expansion_body,
+      '}',
+      // choice(
+      //  $.simple_expansion,
+      //  $.concatenation,
+      // ),
+    )),
+
 
     _statement_not_pipeline: $ => prec(1, choice(
       $.redirected_statement,
@@ -1242,10 +1262,15 @@ module.exports = grammar({
       choice(
         noneOf('#', ...SPECIAL_CHARACTERS),
         seq('\\', noneOf('\\s')),
+
+        // Add support for zsh ranges. It's possible this would be better added
+        // to the extglob_pattern code in scanner.c.
+        seq('<', repeat(/[0-9]/), '-', optional(repeat(/[0-9]/)), '>'),
       ),
       repeat(choice(
         noneOf(...SPECIAL_CHARACTERS),
         seq('\\', noneOf('\\s')),
+        seq('<', repeat(/[0-9]/), '-', optional(repeat(/[0-9]/)), '>'),
         '\\ ',
       )),
     )),
