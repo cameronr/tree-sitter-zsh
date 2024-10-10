@@ -40,6 +40,7 @@ echo ${(g:o:)var}
 Prompt username parameter expansion (zsh)
 ================================================================================
 
+echo ${(%)var:-%n}
 echo ${(%):-%n}
 
 --------------------------------------------------------------------------------
@@ -48,7 +49,16 @@ echo ${(%):-%n}
   (command
     (command_name
       (word))
-    (expansion)))
+    (expansion
+      (expansion_flags)
+      (variable_name)
+      (word)))
+  (command
+    (command_name
+      (word))
+    (expansion
+      (expansion_flags)
+      (prompt_expansion))))
 
 ================================================================================
 Test with array subscript (zsh)

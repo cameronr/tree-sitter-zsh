@@ -141,8 +141,6 @@ module.exports = grammar({
     ),
 
     _statement_not_subshell: $ => choice(
-      $.junx_command,
-      $.blah_command,
       $.redirected_statement,
       $.variable_assignment,
       $.variable_assignments,
@@ -816,19 +814,6 @@ module.exports = grammar({
       optional(seq($._concat, '$')),
     )),
 
-    // Add a testing function
-    junx_command: $ => seq(
-      'JUNX',
-      $.simple_expansion,
-    ),
-
-    blah_command: $ => seq(
-      'BLAH',
-      choice(
-        $.simple_expansion,
-        $.concatenation,
-      ),
-    ),
 
     _special_character: _ => token(prec(-1, choice('{', '}', '[', ']'))),
 
@@ -900,41 +885,25 @@ module.exports = grammar({
           '0', 'p', '~', 'S', '*', 'B', 'E', 'M', 'N', 'R',
 
           /* s:string: */
-          seq(
-            's',
-            $._expansion_flag_string,
-          ),
+          seq( 's', $._expansion_flag_string),
 
           /* g:opts: */
-          seq(
-            'g', ':', /[^:]*/, ':',
-          ),
+          seq( 'g', ':', /[^:]*/, ':'),
 
           /* j:string: */
-          seq(
-            'j',
-            $._expansion_flag_string,
-          ),
+          seq( 'j', $._expansion_flag_string),
 
           /* Z:opts: */
-          seq(
-            'Z',
-            $._expansion_flag_string,
-          ),
+          seq( 'Z', $._expansion_flag_string),
 
           /* _:opts: */
           '_::',
 
           /* I:expr: */
-          seq(
-            'I',
-            $._expansion_flag_string,
-          ),
+          seq( 'I', $._expansion_flag_string),
 
           /* l:expr::string1::string2: */
-          seq(
-            'l',
-            $._expansion_flag_string,
+          seq( 'l', $._expansion_flag_string,
             // FIXME: this is wrong, see _expansion_flag_string below
             // optional(
             //  seq(
@@ -946,9 +915,7 @@ module.exports = grammar({
           ),
 
           /* r:expr::string1::string2: */
-          seq(
-            'r',
-            $._expansion_flag_string,
+          seq( 'r', $._expansion_flag_string,
             // FIXME: this is wrong, see _expansion_flag_string below
             // optional(
             //  seq(
@@ -985,8 +952,15 @@ module.exports = grammar({
       )),
       seq(
         optional(field('operator', token.immediate('!'))),
-        choice($.variable_name, $._simple_variable_name, $._special_variable_name, $.subscript),
         choice(
+          $.variable_name,
+          $._simple_variable_name,
+          $._special_variable_name,
+          $.subscript,
+          $.prompt_expansion,
+        ),
+        choice(
+          $.prompt_expansion,
           $._expansion_expression,
           $._expansion_regex,
           $._expansion_regex_replacement,
@@ -1020,12 +994,23 @@ module.exports = grammar({
           ),
         )),
       ),
+      seq(
+        field('operator', immediateLiterals(':-', '+', ':+', ':?')),
+        choice(
+          $.variable_name,
+          $._simple_variable_name,
+          $._special_variable_name,
+          $.subscript,
+          $.prompt_expansion,
+        ),
+      ),
     ),
 
     _expansion_expression: $ => prec(1, seq(
       field('operator', immediateLiterals('=', ':=', '-', ':-', '+', ':+', '?', ':?')),
       optional(seq(
         choice(
+          $.prompt_expansion,
           alias($._concatenation_in_expansion, $.concatenation),
           $.command_substitution,
           $.word,
@@ -1168,6 +1153,47 @@ module.exports = grammar({
         ),
       )),
     )),
+
+    prompt_expansion: $ => seq(
+      '%',
+      choice(
+        // any single character prompt expansion
+        /./,
+
+        // %D{%H:%M:%S.%.}
+        seq(
+          'D{', repeat(/[^}]/), '}',
+        ),
+
+        // %{...%}
+        // FIXME: this is prolly wrong because of nestability
+        seq(
+          '{', repeat(/[^}]/), '}',
+        ),
+
+        // %(x.true-text.false-text)
+        seq(
+          '(', repeat(/[^)]/), ')',
+        ),
+
+        // %<string<
+        seq(
+          '<', repeat(/[^<]/), '<',
+        ),
+
+        // %>string>
+        seq(
+          '>', repeat(/[^>]/), '>',
+        ),
+
+        // %[xstring]
+        seq(
+          '[', repeat(/[^]]/), ']',
+        ),
+
+      ),
+    ),
+
 
     command_substitution: $ => choice(
       seq('$(', $._statements, ')'),
