@@ -58,7 +58,7 @@ echo ${(%):-%n}
       (word))
     (expansion
       (expansion_flags)
-      (prompt_expansion))))
+      (word))))
 
 ================================================================================
 Test with array subscript (zsh)
@@ -183,3 +183,21 @@ echo $+parameters
       (word))
     (simple_expansion
       (variable_name))))
+
+
+================================================================================
+Nested expansion with no variable name (zsh)
+================================================================================
+
+echo ${${:-asd}}
+
+--------------------------------------------------------------------------------
+
+
+(program
+  (command
+    (command_name
+      (word))
+    (expansion
+      (expansion
+        (variable_name)))))

@@ -531,7 +531,8 @@ module.exports = grammar({
     variable_assignments: $ => seq($.variable_assignment, repeat1($.variable_assignment)),
 
     subscript: $ => prec.left(seq(
-      field('name', $.variable_name),
+      // FIXME: look more closely at special variables that can have subscripts
+      field('name', choice($.variable_name, '*', '@', '?', '-', '_')),
       '[',
       field('index', choice($._literal, $.binary_expression, $.unary_expression, $.parenthesized_expression)),
       optional($._concat),
@@ -974,15 +975,14 @@ module.exports = grammar({
           // support nested expansion
           $.expansion,
         ),
-        choice(
+        optional(choice(
           $._expansion_expression,
           $._expansion_regex,
           $._expansion_regex_replacement,
           $._expansion_regex_removal,
           $._expansion_max_length,
           $._expansion_operator,
-          // $.expansion_modifier,
-        ),
+        )),
       ),
       seq(
         field('operator', token.immediate('!')),
@@ -1016,7 +1016,9 @@ module.exports = grammar({
           $._simple_variable_name,
           $._special_variable_name,
           $.subscript,
-          $.prompt_expansion,
+          // taking out for now in lieu of word
+          // $.prompt_expansion,
+          $.word,
         ),
       ),
     ),
