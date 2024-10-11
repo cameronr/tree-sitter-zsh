@@ -98,6 +98,7 @@ module.exports = grammar({
     /\n/,
     '(',
     'esac',
+    $._zsh_delimited_string,
     $.__error_recovery,
   ],
 
@@ -908,59 +909,44 @@ module.exports = grammar({
           '0', 'p', '~', 'S', '*', 'B', 'E', 'M', 'N', 'R',
 
           /* s:string: */
-          seq( 's', $._expansion_flag_string),
+          seq('s', $._zsh_delimited_string),
 
           /* g:opts: */
-          seq( 'g', ':', /[^:]*/, ':'),
+          seq('g', ':', /[^:]*/, ':'),
 
           /* j:string: */
-          seq( 'j', $._expansion_flag_string),
+          seq('j', $._zsh_delimited_string),
 
           /* Z:opts: */
-          seq( 'Z', $._expansion_flag_string),
+          seq('Z', $._zsh_delimited_string),
 
           /* _:opts: */
           '_::',
 
           /* I:expr: */
-          seq( 'I', $._expansion_flag_string),
+          seq('I', $._zsh_delimited_string),
 
           /* l:expr::string1::string2: */
-          seq( 'l', $._expansion_flag_string,
-            // FIXME: this is wrong, see _expansion_flag_string below
-            // optional(
-            //  seq(
-            //    $._expansion_flag_string,
-            //    optional(
-            //      $._expansion_flag_string,
-            //    )),
-            // ),
+          seq('l', $._zsh_delimited_string,
+            optional(seq(
+              $._zsh_delimited_string,
+              optional(
+                $._zsh_delimited_string,
+              )),
+            ),
           ),
 
           /* r:expr::string1::string2: */
-          seq( 'r', $._expansion_flag_string,
-            // FIXME: this is wrong, see _expansion_flag_string below
-            // optional(
-            //  seq(
-            //    $._expansion_flag_string,
-            //    optional(
-            //      $._expansion_flag_string,
-            //    )),
-            // ),
+          seq('r', $._zsh_delimited_string,
+            optional(seq(
+              $._zsh_delimited_string,
+              optional(
+                $._zsh_delimited_string,
+              )),
+            ),
           ),
         )),
       ')',
-    ),
-
-    // FIXME: this rule is wrong as it's just scanning for a ) when it
-    // really should be treating the first character as a delimited and then
-    // scanning until it finds that delimiter. e.g. this is valid:
-    //   ${(s.).)var}
-    // But I don't know how to do that currently
-    _expansion_flag_string: _ => seq(
-      /[^)]/,
-      repeat(/[^)]/),
-      /[^)]/,
     ),
 
     _expansion_body: $ => choice(
@@ -1164,21 +1150,11 @@ module.exports = grammar({
         seq('t', /[0-9]+/),
 
         // F:expr:
-        seq('F', $._expansion_modifier_string),
+        seq('F', $._zsh_delimited_string),
 
         // W:sep:
-        seq('W', $._expansion_modifier_string),
+        seq('W', $._zsh_delimited_string),
       ),
-    ),
-
-    _expansion_modifier_string: _ => seq(
-      // FIXME: this is wrong, like _expansion_flag_string, it should
-      // read the first character as the delimiter and then scan a string
-      // util it finds that delimiter again, with special handling for ( { [
-      // where it would look for ) } ], respectively
-      ':',
-      repeat(/[^:]/),
-      ':',
     ),
 
     _concatenation_in_expansion: $ => prec(-2, seq(

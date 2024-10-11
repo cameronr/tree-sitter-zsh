@@ -35,6 +35,7 @@ enum TokenType {
     NEWLINE,
     OPENING_PAREN,
     ESAC,
+    ZSH_DELIMITED_STRING,
     ERROR_RECOVERY,
 };
 
@@ -534,6 +535,28 @@ static bool scan(Scanner *scanner, TSLexer *lexer, const bool *valid_symbols) {
         if (valid_symbols[BARE_DOLLAR] && !in_error_recovery(valid_symbols) && scan_bare_dollar(lexer)) {
             return true;
         }
+    }
+
+    if (valid_symbols[ZSH_DELIMITED_STRING] && !in_error_recovery(valid_symbols)) {
+        char delimiter;
+        switch(lexer->lookahead) {
+            case '(': delimiter = ')'; break;
+            case '[': delimiter = ']'; break;
+            case '{': delimiter = '}'; break;
+            default:
+                delimiter = lexer->lookahead;
+        }
+        advance(lexer);
+        do {
+            if (lexer->eof(lexer) || lexer->lookahead == '\n')
+                return false;
+            advance(lexer);
+        } while(lexer->lookahead != delimiter);
+
+        advance(lexer);
+        lexer->mark_end(lexer);
+        lexer->result_symbol = ZSH_DELIMITED_STRING;
+        return true;
     }
 
     if ((valid_symbols[VARIABLE_NAME] || valid_symbols[FILE_DESCRIPTOR] || valid_symbols[HEREDOC_ARROW]) &&

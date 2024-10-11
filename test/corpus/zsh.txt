@@ -142,3 +142,27 @@ echo ${${:-zsh}:c}
       (expansion
         (variable_name))
       (expansion_modifier))))
+
+
+================================================================================
+Expansion modifier with delimited string (zsh)
+================================================================================
+
+echo ${var:F(asd)}
+echo ${(l.15..-..=.r:15::=::-:)var}
+--------------------------------------------------------------------------------
+
+
+(program
+  (command
+    (command_name
+      (word))
+    (expansion
+      (variable_name)
+      (expansion_modifier)))
+  (command
+    (command_name
+      (word))
+    (expansion
+      (expansion_flags)
+      (variable_name))))
