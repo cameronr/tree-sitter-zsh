@@ -879,6 +879,9 @@ module.exports = grammar({
 
     simple_expansion: $ => seq(
       '$',
+
+      // optional operators when not using braces
+      optional(choice('+', '=' )),
       choice(
         $._simple_variable_name,
         $._multiline_variable_name,
