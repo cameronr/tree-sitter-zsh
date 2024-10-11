@@ -108,7 +108,7 @@ Test with numeric range (zsh)
       (word))))
 
 ================================================================================
-Anonymous functions(zsh)
+Anonymous functions (zsh)
 ================================================================================
 
 () {
@@ -125,3 +125,20 @@ Anonymous functions(zsh)
           (word))
         (string
           (string_content))))))
+
+================================================================================
+Nested variable expansion (zsh)
+================================================================================
+
+echo ${${:-zsh}:c}
+--------------------------------------------------------------------------------
+
+
+(program
+  (command
+    (command_name
+      (word))
+    (expansion
+      (expansion
+        (variable_name))
+      (expansion_modifier))))

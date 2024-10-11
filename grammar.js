@@ -957,7 +957,7 @@ module.exports = grammar({
     // scanning until it finds that delimiter. e.g. this is valid:
     //   ${(s.).)var}
     // But I don't know how to do that currently
-    _expansion_flag_string: $ => seq(
+    _expansion_flag_string: _ => seq(
       /[^)]/,
       repeat(/[^)]/),
       /[^)]/,
@@ -981,6 +981,9 @@ module.exports = grammar({
           $._special_variable_name,
           $.subscript,
           $.prompt_expansion,
+
+          // support nested expansion
+          $.expansion,
         ),
         choice(
           $._expansion_expression,
@@ -989,6 +992,7 @@ module.exports = grammar({
           $._expansion_regex_removal,
           $._expansion_max_length,
           $._expansion_operator,
+          // $.expansion_modifier,
         ),
       ),
       seq(
@@ -1099,6 +1103,7 @@ module.exports = grammar({
         $.command_substitution,
         alias($._expansion_max_length_binary_expression, $.binary_expression),
         /\n/,
+        $.expansion_modifier,
       )),
       optional(seq(
         field('operator', ':'),
@@ -1112,6 +1117,7 @@ module.exports = grammar({
           $.command_substitution,
           alias($._expansion_max_length_binary_expression, $.binary_expression),
           /\n/,
+          $.expansion_modifier,
         )),
       )),
     ),
@@ -1142,6 +1148,37 @@ module.exports = grammar({
     _expansion_operator: _ => seq(
       field('operator', token.immediate('@')),
       field('operator', immediateLiterals('U', 'u', 'L', 'Q', 'E', 'P', 'A', 'K', 'a', 'k')),
+    ),
+
+    expansion_modifier: $ => seq(
+      choice(
+        'A', 'a', 'c', 'e', 'l', 'P', 'p', 'q', 'Q', 'r',
+        '&', 'u', 'x', 'f', 'w',
+
+        // h[digits]
+        seq('h', /[0-9]+/),
+
+        // s/l/r[/]
+
+        // t[digits]
+        seq('t', /[0-9]+/),
+
+        // F:expr:
+        seq('F', $._expansion_modifier_string),
+
+        // W:sep:
+        seq('W', $._expansion_modifier_string),
+      ),
+    ),
+
+    _expansion_modifier_string: _ => seq(
+      // FIXME: this is wrong, like _expansion_flag_string, it should
+      // read the first character as the delimiter and then scan a string
+      // util it finds that delimiter again, with special handling for ( { [
+      // where it would look for ) } ], respectively
+      ':',
+      repeat(/[^:]/),
+      ':',
     ),
 
     _concatenation_in_expansion: $ => prec(-2, seq(
@@ -1176,7 +1213,7 @@ module.exports = grammar({
       )),
     )),
 
-    prompt_expansion: $ => seq(
+    prompt_expansion: _ => seq(
       '%',
       choice(
         // any single character prompt expansion
