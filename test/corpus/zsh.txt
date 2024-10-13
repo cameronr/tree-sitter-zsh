@@ -201,3 +201,36 @@ echo ${${:-asd}}
     (expansion
       (expansion
         (variable_name)))))
+
+
+================================================================================
+Variable expansions in assignment (zsh)
+================================================================================
+
+typeset -i asd$var
+typeset asd$2=1
+typeset _$var=1
+
+--------------------------------------------------------------------------------
+
+
+(program
+  (declaration_command
+    (word)
+    (variable_name)
+    (simple_expansion
+      (variable_name)))
+  (declaration_command
+    (variable_assignment
+      (variable_name_with_expansion
+        (variable_name)
+        (simple_expansion
+          (variable_name)))
+      (number)))
+  (declaration_command
+    (variable_assignment
+      (variable_name_with_expansion
+        (variable_name)
+        (simple_expansion
+          (variable_name)))
+      (number))))

@@ -53,6 +53,10 @@ module.exports = grammar({
     [$.redirected_statement, $.command_substitution],
     [$.function_definition, $.command_name],
     [$.pipeline],
+
+    // for parsing typeset str$var
+    [$.declaration_command, $.variable_name_with_expansion],
+
   ],
 
   inline: $ => [
@@ -476,8 +480,9 @@ module.exports = grammar({
       choice('declare', 'typeset', 'export', 'readonly', 'local'),
       repeat(choice(
         $._literal,
-        $._simple_variable_name,
-        $.variable_assignment,
+        // TODO: clean up this hack. not sure why _simple_variable_name isn't matching '_'
+        alias(choice('_', $._simple_variable_name), $.variable_name),
+        alias($.declare_variable_assignment, $.variable_assignment),
       )),
     )),
 
@@ -527,6 +532,32 @@ module.exports = grammar({
         alias($._comment_word, $.word),
       )),
     ),
+
+    declare_variable_assignment: $ => seq(
+      field('name', choice(
+        $.variable_name,
+        $.variable_name_with_expansion,
+        $.subscript,
+      )),
+      choice(
+        '=',
+        '+=',
+      ),
+      field('value', choice(
+        $._literal,
+        $.array,
+        $._empty_value,
+        alias($._comment_word, $.word),
+      )),
+    ),
+
+    variable_name_with_expansion: $ => prec(0, seq(
+      optional(alias(choice('_', $._simple_variable_name), $.variable_name)),
+      repeat1(prec(2, choice(
+        $.simple_expansion,
+        $.expansion,
+      ))),
+    )),
 
     variable_assignments: $ => seq($.variable_assignment, repeat1($.variable_assignment)),
 
@@ -893,8 +924,6 @@ module.exports = grammar({
         alias('#', $.special_variable_name),
       ),
     ),
-
-    string_expansion: $ => seq('$', $.string),
 
     expansion: $ => seq(
       '${',
