@@ -116,7 +116,6 @@ Anonymous functions (zsh)
 }
 --------------------------------------------------------------------------------
 
-
 (program
   (function_definition
     (compound_statement
@@ -133,7 +132,6 @@ Nested variable expansion (zsh)
 echo ${${:-zsh}:c}
 --------------------------------------------------------------------------------
 
-
 (program
   (command
     (command_name
@@ -143,7 +141,6 @@ echo ${${:-zsh}:c}
         (variable_name))
       (expansion_modifier))))
 
-
 ================================================================================
 Expansion modifier with delimited string (zsh)
 ================================================================================
@@ -151,7 +148,6 @@ Expansion modifier with delimited string (zsh)
 echo ${var:F(asd)}
 echo ${(l.15..-..=.r:15::=::-:)var}
 --------------------------------------------------------------------------------
-
 
 (program
   (command
@@ -167,7 +163,6 @@ echo ${(l.15..-..=.r:15::=::-:)var}
       (expansion_flags)
       (variable_name))))
 
-
 ================================================================================
 + without {} (zsh)
 ================================================================================
@@ -176,14 +171,12 @@ echo $+parameters
 
 --------------------------------------------------------------------------------
 
-
 (program
   (command
     (command_name
       (word))
     (simple_expansion
       (variable_name))))
-
 
 ================================================================================
 Nested expansion with no variable name (zsh)
@@ -192,7 +185,6 @@ Nested expansion with no variable name (zsh)
 echo ${${:-asd}}
 
 --------------------------------------------------------------------------------
-
 
 (program
   (command
@@ -212,7 +204,6 @@ typeset asd$2=1
 typeset _$var=1
 
 --------------------------------------------------------------------------------
-
 
 (program
   (declaration_command
@@ -234,3 +225,22 @@ typeset _$var=1
         (simple_expansion
           (variable_name)))
       (number))))
+
+================================================================================
+Empty :- and :? operators (zsh)
+================================================================================
+
+echo ${:-}
+echo ${:+}
+
+--------------------------------------------------------------------------------
+
+(program
+  (command
+    (command_name
+      (word))
+    (expansion))
+  (command
+    (command_name
+      (word))
+    (expansion)))

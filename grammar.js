@@ -1039,7 +1039,20 @@ module.exports = grammar({
         )),
       ),
       seq(
-        field('operator', immediateLiterals(':-', '+', ':+', ':?')),
+        // zsh can have no operators with :- and :+
+        field('operator', immediateLiterals(':-', ':+')),
+        optional(choice(
+          $.variable_name,
+          $._simple_variable_name,
+          $._special_variable_name,
+          $.subscript,
+          // taking out for now in lieu of word
+          // $.prompt_expansion,
+          $.word,
+        )),
+      ),
+      seq(
+        field('operator', immediateLiterals('+', ':?')),
         choice(
           $.variable_name,
           $._simple_variable_name,
