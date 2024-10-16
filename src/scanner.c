@@ -23,7 +23,8 @@ enum TokenType {
     EXPANSION_WORD,
     EXTGLOB_PATTERN,
     BARE_DOLLAR,
-    BRACE_START,
+    BRACE_RANGE_START,
+    BRACE_COMMA_START,
     IMMEDIATE_DOUBLE_HASH,
     EXTERNAL_EXPANSION_SYM_HASH,
     EXTERNAL_EXPANSION_SYM_BANG,
@@ -348,6 +349,9 @@ static bool scan_heredoc_content(Scanner *scanner, TSLexer *lexer, enum TokenTyp
 }
 
 static bool scan(Scanner *scanner, TSLexer *lexer, const bool *valid_symbols) {
+
+    bool brace_expansion_allowed = true;
+
     if (valid_symbols[CONCAT] && !in_error_recovery(valid_symbols)) {
         if (!(lexer->lookahead == 0 || iswspace(lexer->lookahead) || lexer->lookahead == '>' ||
               lexer->lookahead == '<' || lexer->lookahead == ')' || lexer->lookahead == '(' ||
@@ -532,8 +536,15 @@ static bool scan(Scanner *scanner, TSLexer *lexer, const bool *valid_symbols) {
             }
         }
 
-        if (valid_symbols[BARE_DOLLAR] && !in_error_recovery(valid_symbols) && scan_bare_dollar(lexer)) {
-            return true;
+        if (valid_symbols[BARE_DOLLAR] && !in_error_recovery(valid_symbols)) {
+            if (scan_bare_dollar(lexer)) {
+                return true;
+            }
+            if ((lexer->result_symbol==BARE_DOLLAR) && (lexer->lookahead == '{')) {
+                // We just scanned a $ but didn't return true because it was followed by
+                // another symbol. If that symbol is a {, we don't want to allow brace expansions
+                brace_expansion_allowed = false;
+            }
         }
     }
 
@@ -1166,7 +1177,8 @@ expansion_word:
     }
 
 brace_start:
-    if (valid_symbols[BRACE_START] && !in_error_recovery(valid_symbols)) {
+    if (brace_expansion_allowed && (valid_symbols[BRACE_RANGE_START] || valid_symbols[BRACE_COMMA_START]) && !in_error_recovery(valid_symbols)) {
+
         while (iswspace(lexer->lookahead)) {
             skip(lexer);
         }
@@ -1178,30 +1190,67 @@ brace_start:
         advance(lexer);
         lexer->mark_end(lexer);
 
-        while (isdigit(lexer->lookahead)) {
+        while(iswalnum(lexer->lookahead)) {
             advance(lexer);
         }
 
-        if (lexer->lookahead != '.') {
-            return false;
-        }
-        advance(lexer);
+        if (valid_symbols[BRACE_RANGE_START]) {
+            if (lexer->lookahead == '.') {
+                advance(lexer);
+                if (lexer->lookahead == '.') {
+                    lexer->result_symbol = BRACE_RANGE_START;
+                    return true;
+                }
 
-        if (lexer->lookahead != '.') {
-            return false;
+            }
         }
-        advance(lexer);
 
-        while (isdigit(lexer->lookahead)) {
+        if (valid_symbols[BRACE_COMMA_START]) {
+            if (lexer->lookahead == ',') {
+                advance(lexer);
+                lexer->result_symbol = BRACE_COMMA_START;
+                return true;
+            }
+        }
+
+/*
+           while (iswspace(lexer->lookahead)) {
+            skip(lexer);
+           }
+
+           if (lexer->lookahead != '{') {
+            return false;
+           }
+
+           advance(lexer);
+           lexer->mark_end(lexer);
+
+           while (isdigit(lexer->lookahead)) {
             advance(lexer);
-        }
+           }
 
-        if (lexer->lookahead != '}') {
+           if (lexer->lookahead != '.') {
             return false;
-        }
+           }
+           advance(lexer);
 
-        lexer->result_symbol = BRACE_START;
-        return true;
+           if (lexer->lookahead != '.') {
+            return false;
+           }
+           advance(lexer);
+
+           while (isdigit(lexer->lookahead)) {
+            advance(lexer);
+           }
+
+           if (lexer->lookahead != '}') {
+            return false;
+           }
+
+           lexer->result_symbol = BRACE_RANGE_START;
+
+           return true;
+ */
     }
 
     return false;

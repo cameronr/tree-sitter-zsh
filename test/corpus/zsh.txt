@@ -244,3 +244,60 @@ echo ${:+}
     (command_name
       (word))
     (expansion)))
+
+================================================================================
+Brace expansions (zsh)
+================================================================================
+
+echo {a..e}
+echo {1..5}
+echo {1..10..2}
+echo {a,b}
+echo {a,b,}
+echo {a,b,c}
+echo {a,b{1..2},c}
+echo {$#parts..5}
+echo {${num}..10}
+echo {1$num..10}
+
+--------------------------------------------------------------------------------
+
+(program
+  (command
+    (command_name
+      (word))
+    (brace_expression
+      (letter)
+      (letter)))
+  (command
+    (command_name
+      (word))
+    (brace_expression
+      (number)
+      (number)))
+  (command
+    (command_name
+      (word))
+    (brace_expression
+      (number)
+      (number)
+      (number)))
+  (command
+    (command_name
+      (word))
+    (brace_expression
+      (word)
+      (word)))
+  (command
+    (command_name
+      (word))
+    (brace_expression
+      (word)
+      (word)))
+  (command
+    (command_name
+      (word))
+    (brace_expression
+      (word)
+      (word)
+      (word)))

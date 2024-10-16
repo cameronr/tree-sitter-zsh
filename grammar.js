@@ -90,7 +90,8 @@ module.exports = grammar({
     $._expansion_word,
     $.extglob_pattern,
     $._bare_dollar,
-    $._brace_start,
+    $._brace_range_start,
+    $._brace_comma_start,
     $._immediate_double_hash,
     $._external_expansion_sym_hash,
     $._external_expansion_sym_bang,
@@ -170,7 +171,7 @@ module.exports = grammar({
     // Add a testing function
     junx_command: $ => seq(
       'JUNX',
-      $.word,
+      $.brace_expression,
     ), //
     //
     blah_command: $ => prec.left(seq(
@@ -762,12 +763,48 @@ module.exports = grammar({
       seq('$[', $._arithmetic_expression, ']'),
     ),
 
-    brace_expression: $ => seq(
-      alias($._brace_start, '{'),
-      alias(token.immediate(/\d+/), $.number),
+    brace_expression: $=> choice(
+      $._brace_range_expression,
+      $._brace_comma_expression,
+    ),
+
+    _brace_range_expression: $ => seq(
+      alias($._brace_range_start, '{'),
+      $._brace_range_literal,
       token.immediate('..'),
+      $._brace_range_literal,
+      optional(seq(
+        token.immediate('..'),
+        alias(token.immediate(/\d+/), $.number),
+      )),
+      '}',
+    ),
+
+    _brace_range_literal: $ => choice(
       alias(token.immediate(/\d+/), $.number),
+      $.letter,
+    ),
+
+    letter: _ => /[a-zA-Z]/,
+
+    _brace_comma_expression: $=> seq(
+      alias($._brace_comma_start, '{'),
+      $._brace_comma_literal,
+      repeat1(seq(
+        token.immediate(','),
+        optional($._brace_comma_literal),
+      )),
       token.immediate('}'),
+    ),
+
+    _brace_comma_literal: $ => choice(
+      $.number,
+      $.subscript,
+      $.simple_expansion,
+      $.expansion,
+      $._simple_variable_name,
+      $.variable_name,
+      alias(/[a-zA-Z]+/, $.word),
     ),
 
     _arithmetic_expression: $ => prec(1, choice(

@@ -1334,8 +1334,8 @@ echo {1..2}
 echo {0..5}
 echo {0..2 # not a brace expression
 echo }{0..2}
-echo {0..n} # not a brace expression
-echo {0..n..2} # not a brace expression
+echo {0..n} # not a brace expression in bash, but is in zsh!
+echo {0..n..2} # not a brace expression in bash, but is in zsh!
 echo {0..2}{1..2}
 
 ---
@@ -1358,11 +1358,11 @@ echo {0..2}{1..2}
       (brace_expression (number) (number))))
   (command
     (command_name (word))
-    (concatenation (word) (word) (word)))
+    (brace_expression (number) (letter)))
   (comment)
   (command
     (command_name (word))
-    (concatenation (word) (word) (word)))
+    (brace_expression (number) (letter) (number)))
   (comment)
   (command
     (command_name (word))
