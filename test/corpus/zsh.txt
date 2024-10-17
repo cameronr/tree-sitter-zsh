@@ -164,10 +164,11 @@ echo ${(l.15..-..=.r:15::=::-:)var}
       (variable_name))))
 
 ================================================================================
-+ without {} (zsh)
+Simple variable names with special characters (zsh)
 ================================================================================
 
 echo $+parameters
+echo $#arr
 
 --------------------------------------------------------------------------------
 
@@ -246,7 +247,7 @@ echo ${:+}
     (expansion)))
 
 ================================================================================
-Brace expansions (zsh)
+Brace expansions basic (zsh)
 ================================================================================
 
 echo {a..e}
@@ -254,11 +255,6 @@ echo {1..5}
 echo {1..10..2}
 echo {a,b}
 echo {a,b,}
-echo {a,b,c}
-echo {a,b{1..2},c}
-echo {$#parts..5}
-echo {${num}..10}
-echo {1$num..10}
 
 --------------------------------------------------------------------------------
 
@@ -293,11 +289,36 @@ echo {1$num..10}
       (word))
     (brace_expression
       (word)
-      (word)))
+      (word))))
+
+================================================================================
+Brace expansions advanced (zsh)
+================================================================================
+
+echo {a,{1..2},c}
+echo {${num}..10}
+echo {$#parts..5}
+echo {a,b{1..2},c}
+echo {1$num..10}
+
+--------------------------------------------------------------------------------
+
+(program
   (command
     (command_name
       (word))
     (brace_expression
       (word)
-      (word)
+      (brace_expression
+        (number)
+        (number))
       (word)))
+  (command
+    (command_name
+      (word))
+    (brace_expression
+      (expansion
+        (variable_name))
+      (number)))
+  
+  (placeholder)

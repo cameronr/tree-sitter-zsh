@@ -57,6 +57,9 @@ module.exports = grammar({
     // for parsing typeset str$var
     [$.declaration_command, $.variable_name_with_expansion],
 
+    // for $# vs $## vs $#var and issues with subscript
+    // [$.simple_expansion],
+
   ],
 
   inline: $ => [
@@ -171,7 +174,7 @@ module.exports = grammar({
     // Add a testing function
     junx_command: $ => seq(
       'JUNX',
-      $.brace_expression,
+      $._brace_range_expression,
     ), //
     //
     blah_command: $ => prec.left(seq(
@@ -783,6 +786,11 @@ module.exports = grammar({
     _brace_range_literal: $ => choice(
       alias(token.immediate(/\d+/), $.number),
       $.letter,
+      $.subscript,
+      $.simple_expansion,
+      $.expansion,
+      $._simple_variable_name,
+      $.variable_name,
     ),
 
     letter: _ => /[a-zA-Z]/,
@@ -797,14 +805,17 @@ module.exports = grammar({
       token.immediate('}'),
     ),
 
-    _brace_comma_literal: $ => choice(
-      $.number,
-      $.subscript,
-      $.simple_expansion,
-      $.expansion,
-      $._simple_variable_name,
-      $.variable_name,
-      alias(/[a-zA-Z]+/, $.word),
+    _brace_comma_literal: $ => seq(
+      choice(
+        $.number,
+        $.subscript,
+        $.simple_expansion,
+        $.expansion,
+        $._simple_variable_name,
+        $.variable_name,
+        $.brace_expression,
+        alias(/[a-zA-Z]+/, $.word),
+      ),
     ),
 
     _arithmetic_expression: $ => prec(1, choice(
@@ -948,17 +959,24 @@ module.exports = grammar({
 
     simple_expansion: $ => seq(
       '$',
-
       // optional operators when not using braces
-      optional(choice('+', '=' )),
       choice(
-        $._simple_variable_name,
-        $._multiline_variable_name,
-        $._special_variable_name,
-        $.variable_name,
-        $.subscript,
-        alias('!', $.special_variable_name),
-        alias('#', $.special_variable_name),
+        prec(-1, alias('#', $.special_variable_name)),
+        seq(
+          optional(choice('+', '=' )),
+          optional('#'),
+          choice(
+            $._simple_variable_name,
+            $._multiline_variable_name,
+            // token.immediate(alias(choice('*', '@', '?', '!', '-', '$', '0', '_'), $.special_variable_name)),
+            // token.immediate(alias(choice('*', '@', '?', '!', '$', '0', '_'), $.special_variable_name)),
+            immediateLiterals('*', '@', '?', '!', '$', '0', '_'),
+            // $._special_variable_name_no_hash,
+            $.variable_name,
+            $.subscript,
+            // alias('!', $.special_variable_name),
+          ),
+        ),
       ),
     ),
 
@@ -1356,7 +1374,9 @@ module.exports = grammar({
       $.variable_name,
     ),
 
+    // FIXME: prolly should find a cleaner way to handle #
     _special_variable_name: $ => alias(choice('*', '@', '?', '!', '#', '-', '$', '0', '_'), $.special_variable_name),
+    _special_variable_name_no_hash: $ => alias(choice('*', '@', '?', '!', '-', '$', '0', '_'), $.special_variable_name),
 
     word: _ => token(seq(
       choice(

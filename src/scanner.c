@@ -348,7 +348,49 @@ static bool scan_heredoc_content(Scanner *scanner, TSLexer *lexer, enum TokenTyp
     }
 }
 
+static void print_valid_symbols(const bool *valid_symbols) {
+    for (int i = 1; i <= ERROR_RECOVERY; i++) {
+        switch(i) {
+            case HEREDOC_START: if (valid_symbols[i]) printf("HEREDOC_START "); break;
+            case SIMPLE_HEREDOC_BODY: if (valid_symbols[i]) printf("SIMPLE_HEREDOC_BODY "); break;
+            case HEREDOC_BODY_BEGINNING: if (valid_symbols[i]) printf("HEREDOC_BODY_BEGINNING "); break;
+            case HEREDOC_CONTENT: if (valid_symbols[i]) printf("HEREDOC_CONTENT "); break;
+            case HEREDOC_END: if (valid_symbols[i]) printf("HEREDOC_END "); break;
+            case FILE_DESCRIPTOR: if (valid_symbols[i]) printf("FILE_DESCRIPTOR "); break;
+            case EMPTY_VALUE: if (valid_symbols[i]) printf("EMPTY_VALUE "); break;
+            case CONCAT: if (valid_symbols[i]) printf("CONCAT "); break;
+            case VARIABLE_NAME: if (valid_symbols[i]) printf("VARIABLE_NAME "); break;
+            case TEST_OPERATOR: if (valid_symbols[i]) printf("TEST_OPERATOR "); break;
+            case REGEX: if (valid_symbols[i]) printf("REGEX "); break;
+            case REGEX_NO_SLASH: if (valid_symbols[i]) printf("REGEX_NO_SLASH "); break;
+            case REGEX_NO_SPACE: if (valid_symbols[i]) printf("REGEX_NO_SPACE "); break;
+            case EXPANSION_WORD: if (valid_symbols[i]) printf("EXPANSION_WORD "); break;
+            case EXTGLOB_PATTERN: if (valid_symbols[i]) printf("EXTGLOB_PATTERN "); break;
+            case BARE_DOLLAR: if (valid_symbols[i]) printf("BARE_DOLLAR "); break;
+            case BRACE_RANGE_START: if (valid_symbols[i]) printf("BRACE_RANGE_START "); break;
+            case BRACE_COMMA_START: if (valid_symbols[i]) printf("BRACE_COMMA_START "); break;
+            case IMMEDIATE_DOUBLE_HASH: if (valid_symbols[i]) printf("IMMEDIATE_DOUBLE_HASH "); break;
+            case EXTERNAL_EXPANSION_SYM_HASH: if (valid_symbols[i]) printf("EXTERNAL_EXPANSION_SYM_HASH "); break;
+            case EXTERNAL_EXPANSION_SYM_BANG: if (valid_symbols[i]) printf("EXTERNAL_EXPANSION_SYM_BANG "); break;
+            case EXTERNAL_EXPANSION_SYM_EQUAL: if (valid_symbols[i]) printf("EXTERNAL_EXPANSION_SYM_EQUAL "); break;
+            case CLOSING_BRACE: if (valid_symbols[i]) printf("CLOSING_BRACE "); break;
+            case CLOSING_BRACKET: if (valid_symbols[i]) printf("CLOSING_BRACKET "); break;
+            case HEREDOC_ARROW: if (valid_symbols[i]) printf("HEREDOC_ARROW "); break;
+            case HEREDOC_ARROW_DASH: if (valid_symbols[i]) printf("HEREDOC_ARROW_DASH "); break;
+            case NEWLINE: if (valid_symbols[i]) printf("NEWLINE "); break;
+            case OPENING_PAREN: if (valid_symbols[i]) printf("OPENING_PAREN "); break;
+            case ESAC: if (valid_symbols[i]) printf("ESAC "); break;
+            case ZSH_DELIMITED_STRING: if (valid_symbols[i]) printf("ZSH_DELIMITED_STRING "); break;
+            case ERROR_RECOVERY: if (valid_symbols[i]) printf("ERROR_RECOVERY "); break;
+        }
+    }
+    printf("\n");
+}
+
 static bool scan(Scanner *scanner, TSLexer *lexer, const bool *valid_symbols) {
+
+    /*printf("scan scalled: \n");*/
+    /*print_valid_symbols(valid_symbols);*/
 
     bool brace_expansion_allowed = true;
 
@@ -1190,6 +1232,97 @@ brace_start:
         advance(lexer);
         lexer->mark_end(lexer);
 
+        typedef struct {
+            bool found_dot;
+            bool found_comma;
+            bool found_alpha;
+            uint32_t brace_depth; // starts at 1
+            bool found_first_param;
+            bool done;
+        } State;
+
+        State state = { false, false, false, 1, false, false };
+        while (!state.done) {
+            while(isdigit(lexer->lookahead)) {
+                state.found_first_param = true;
+                advance(lexer);
+            }
+
+            while(iswalpha(lexer->lookahead)) {
+                state.found_first_param = true;
+                state.found_alpha = true;
+                advance(lexer);
+            }
+
+            if (lexer->lookahead == '\\') {
+                // if it's an escape, advance. if the next char is eof or newline, it's a no match
+                // otherwise, skip the character and move on
+                advance(lexer);
+                if (lexer->eof(lexer) || (lexer->lookahead == '\n')) {
+                    return false;
+                }
+                // skip over the escaped character
+                advance(lexer);
+                continue;
+            }
+
+            // FIXME: won't handle single/double quotes with ., and unmatched {}
+
+            switch(lexer->lookahead) {
+                case '\0':
+                    return false;
+                case '{':
+                    /*printf("found a {\n");*/
+                    state.brace_depth++;
+                    break;
+                case '}':
+                    state.brace_depth--;
+                    if (state.brace_depth == 0) {
+                        state.done = true;
+                    }
+                    break;
+                case ' ':
+                case '\t':
+                    // unescaped whitespace is a no-match
+                    return false;
+                    break;
+                case '.':
+                    /*printf("found ., state: brace: %d, first: %d\n", state.brace_depth, state.found_first_param);*/
+                    if (state.brace_depth == 1) {
+                        if (!state.found_first_param) {
+                            return false;
+                        }
+                        advance(lexer);
+                        if (lexer->lookahead == '.') {
+                            if (valid_symbols[BRACE_RANGE_START]) {
+                                lexer->result_symbol = BRACE_RANGE_START;
+                                /*printf("returning BRACE_RANGE_START\n");*/
+                                return true;
+                            }
+                        }
+                    }
+                    break;
+                case ',':
+                    /*printf("found ., state: brace: %d, first: %d\n", state.brace_depth, state.found_first_param);*/
+                    if (state.brace_depth == 1) {
+                        if (!state.found_first_param) {
+                            return false;
+                        }
+                        if (valid_symbols[BRACE_COMMA_START]) {
+                            lexer->result_symbol = BRACE_COMMA_START;
+                            /*printf("returning BRACE_COMMA_START\n");*/
+                            return true;
+                        }
+                    }
+                    break;
+
+            }
+
+            state.found_first_param = true;
+            advance(lexer);
+        }
+
+/*
         while(iswalnum(lexer->lookahead)) {
             advance(lexer);
         }
@@ -1212,7 +1345,7 @@ brace_start:
                 return true;
             }
         }
-
+ */
 /*
            while (iswspace(lexer->lookahead)) {
             skip(lexer);
