@@ -56,10 +56,6 @@ module.exports = grammar({
 
     // for parsing typeset str$var
     [$.declaration_command, $.variable_name_with_expansion],
-
-    // for $# vs $## vs $#var and issues with subscript
-    // [$.simple_expansion],
-
   ],
 
   inline: $ => [
@@ -107,6 +103,8 @@ module.exports = grammar({
     '(',
     'esac',
     $._zsh_delimited_string,
+    $._bare_hash,
+    $._hash_operator,
     $.__error_recovery,
   ],
 
@@ -959,22 +957,22 @@ module.exports = grammar({
 
     simple_expansion: $ => seq(
       '$',
-      // optional operators when not using braces
       choice(
-        prec(-1, alias('#', $.special_variable_name)),
+        // zsh: have to pull out $# here because $#var is valid.
+        // And had to use external scanner because otherwise _concat will grab everything
+        alias($._bare_hash, $.special_variable_name),
+
         seq(
-          optional(choice('+', '=' )),
-          optional('#'),
+          // optional operators when not using braces
+          optional(alias(choice('+', '=' ), $.operator)),
+          optional(alias($._hash_operator, $.operator)),
           choice(
             $._simple_variable_name,
             $._multiline_variable_name,
-            // token.immediate(alias(choice('*', '@', '?', '!', '-', '$', '0', '_'), $.special_variable_name)),
-            // token.immediate(alias(choice('*', '@', '?', '!', '$', '0', '_'), $.special_variable_name)),
-            immediateLiterals('*', '@', '?', '!', '$', '0', '_'),
-            // $._special_variable_name_no_hash,
+            $._special_variable_name,
             $.variable_name,
             $.subscript,
-            // alias('!', $.special_variable_name),
+            alias('!', $.special_variable_name),
           ),
         ),
       ),
@@ -1101,6 +1099,7 @@ module.exports = grammar({
           $._simple_variable_name,
           $._special_variable_name,
           $.subscript,
+          $.brace_expression,
           // taking out for now in lieu of word
           // $.prompt_expansion,
           $.word,
