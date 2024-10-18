@@ -77,7 +77,7 @@ Test with array subscript (zsh)
           (word))))))
 
 ================================================================================
-Command with array subscript (zsh)
+Variable with array subscript (zsh)
 ================================================================================
 
 echo $commands[nvim]
@@ -320,5 +320,13 @@ echo {1$num..10}
       (expansion
         (variable_name))
       (number)))
-  
-  (placeholder)
+  (command
+    (command_name
+      (word))
+    (brace_expression
+      (simple_expansion
+        (operator)
+        (variable_name))
+      (number)))
+
+(placeholder)

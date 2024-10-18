@@ -36,7 +36,9 @@ enum TokenType {
     NEWLINE,
     OPENING_PAREN,
     ESAC,
-    ZSH_DELIMITED_STRING,
+    ZSH_DELIMITED_STRING,  // e.g. (s.:.) where any character can be used in place of .
+    BARE_HASH,             // next two are used to distinguish $# and $#var in a simple expansion
+    HASH_OPERATOR,         // I could not get it work any other way for the life of me because of _concat
     ERROR_RECOVERY,
 };
 
@@ -381,16 +383,21 @@ static void print_valid_symbols(const bool *valid_symbols) {
             case OPENING_PAREN: if (valid_symbols[i]) printf("OPENING_PAREN "); break;
             case ESAC: if (valid_symbols[i]) printf("ESAC "); break;
             case ZSH_DELIMITED_STRING: if (valid_symbols[i]) printf("ZSH_DELIMITED_STRING "); break;
+            case BARE_HASH: if (valid_symbols[i]) printf("BARE_HASH "); break;
+            case HASH_OPERATOR: if (valid_symbols[i]) printf("HASH_OPERATOR "); break;
             case ERROR_RECOVERY: if (valid_symbols[i]) printf("ERROR_RECOVERY "); break;
+            default:
+                if (valid_symbols[i]) printf("UNKNOWN(%d) ", i); break;
+
         }
     }
-    printf("\n");
+    // printf("\n");
 }
 
 static bool scan(Scanner *scanner, TSLexer *lexer, const bool *valid_symbols) {
 
-    /*printf("scan scalled: \n");*/
-    /*print_valid_symbols(valid_symbols);*/
+    // printf("scan scalled: la: %c (%d)\n", lexer->lookahead, lexer->lookahead);
+    // print_valid_symbols(valid_symbols);
 
     bool brace_expansion_allowed = true;
 
@@ -401,6 +408,7 @@ static bool scan(Scanner *scanner, TSLexer *lexer, const bool *valid_symbols) {
               (lexer->lookahead == '}' && valid_symbols[CLOSING_BRACE]) ||
               (lexer->lookahead == ']' && valid_symbols[CLOSING_BRACKET]))) {
             lexer->result_symbol = CONCAT;
+            // printf("concat, la: %c\n", lexer->lookahead);
             // So for a`b`, we want to return a concat. We check if the
             // 2nd backtick has whitespace after it, and if it does we
             // return concat.
@@ -424,17 +432,21 @@ static bool scan(Scanner *scanner, TSLexer *lexer, const bool *valid_symbols) {
                 lexer->mark_end(lexer);
                 advance(lexer);
                 if (lexer->lookahead == '"' || lexer->lookahead == '\'' || lexer->lookahead == '\\') {
+                    // printf("concat, la: %c (%d)", lexer->lookahead, lexer->lookahead);
                     return true;
                 }
                 if (lexer->eof(lexer)) {
                     return false;
                 }
             } else {
+                // printf("concat returning true, la != \\  la: %c (%d)\n", lexer->lookahead, lexer->lookahead);
+
                 return true;
             }
         }
         if (iswspace(lexer->lookahead) && valid_symbols[CLOSING_BRACE] && !valid_symbols[EXPANSION_WORD]) {
             lexer->result_symbol = CONCAT;
+            // printf("concat, la = space  vs = {CLOSING_BRACE, !EXPANSION_WORD}\n");
             return true;
         }
     }
@@ -612,8 +624,12 @@ static bool scan(Scanner *scanner, TSLexer *lexer, const bool *valid_symbols) {
         return true;
     }
 
-    if ((valid_symbols[VARIABLE_NAME] || valid_symbols[FILE_DESCRIPTOR] || valid_symbols[HEREDOC_ARROW]) &&
+    if ((valid_symbols[VARIABLE_NAME] || valid_symbols[FILE_DESCRIPTOR] || valid_symbols[HEREDOC_ARROW] ||
+         valid_symbols[BARE_HASH] || valid_symbols[HASH_OPERATOR]) &&
         !valid_symbols[REGEX_NO_SLASH] && !in_error_recovery(valid_symbols)) {
+
+        // printf("variable name (FD, HDA, RNS), la: %c\n", lexer->lookahead);
+
         for (;;) {
             if ((lexer->lookahead == ' ' || lexer->lookahead == '\t' || lexer->lookahead == '\r' ||
                  (lexer->lookahead == '\n' && !valid_symbols[NEWLINE])) &&
@@ -624,6 +640,7 @@ static bool scan(Scanner *scanner, TSLexer *lexer, const bool *valid_symbols) {
 
                 if (lexer->eof(lexer)) {
                     lexer->mark_end(lexer);
+                    // printf("variable name, returning true la: %c\n", lexer->lookahead);
                     lexer->result_symbol = VARIABLE_NAME;
                     return true;
                 }
@@ -660,6 +677,29 @@ static bool scan(Scanner *scanner, TSLexer *lexer, const bool *valid_symbols) {
                 lexer->result_symbol = EXTGLOB_PATTERN;
                 return true;
             }
+        }
+
+        if ((lexer->lookahead == '#') && (valid_symbols[BARE_HASH] || valid_symbols[HASH_OPERATOR])) {
+            // printf("scan hash 1: la: %c (%d)\n", lexer->lookahead, lexer->lookahead);
+            advance(lexer);
+
+            // printf("scan hash 3: la: %c (%d)\n", lexer->lookahead, lexer->lookahead);
+            if ((lexer->lookahead == ' ' || lexer->lookahead == '\n' || lexer->eof(lexer)) && valid_symbols[BARE_HASH]) {
+                lexer->mark_end(lexer);
+                lexer->result_symbol = BARE_HASH;
+                // printf("scan hash, found bare hash, returning true\n");
+                return true;
+            }
+
+            if (iswalpha(lexer->lookahead) && valid_symbols[HASH_OPERATOR]) {
+                lexer->mark_end(lexer);
+                lexer->result_symbol = HASH_OPERATOR;
+                // printf("scan hash, found hash followed by alpha, setting operator, return true\n");
+                return true;
+            }
+
+            // printf("scan hash, return false\n");
+            return false;
         }
 
         if (valid_symbols[HEREDOC_ARROW] && lexer->lookahead == '<') {
@@ -720,6 +760,8 @@ static bool scan(Scanner *scanner, TSLexer *lexer, const bool *valid_symbols) {
         }
 
         if (valid_symbols[VARIABLE_NAME]) {
+            // printf("variable name, lower block: %c\n", lexer->lookahead);
+
             if (lexer->lookahead == '+') {
                 lexer->mark_end(lexer);
                 advance(lexer);
@@ -751,6 +793,8 @@ static bool scan(Scanner *scanner, TSLexer *lexer, const bool *valid_symbols) {
                 return iswalpha(lexer->lookahead);
             }
         }
+
+        // printf("variable name, returning false\n");
 
         return false;
     }
